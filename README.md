@@ -1,6 +1,6 @@
 # Commbank PDF Statement Converter
 
-[https://alshdavid.github.io/commbank-statement-converter/](https://alshdavid.github.io/commbank-statement-converter/)
+[https://commbank-statement-converter.davidalsh.com/](https://commbank-statement-converter.davidalsh.com/)
 
 Just select your files and start the conversion
 

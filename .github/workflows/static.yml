@@ -1,4 +1,4 @@
-name: Build and Deploy
+name: Deploy to Github Pages
 
 on:
   push:
@@ -6,38 +6,25 @@ on:
 
   workflow_dispatch:
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
 concurrency:
   group: "main"
   cancel-in-progress: true
 
-env:
-  BASE_HREF: /commbank-statement-converter/
-
 jobs:
   deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Build Site
-        run: |
-          npm install -g pnpm
-          pnpm install
-          pnpm run build
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: 'dist'
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - uses: actions/checkout@v6
+      - run: mkdir -p $HOME/.local/nodejs && VERSION=$(curl -sL https://nodejs.org/dist/index.tab | awk 'NR > 1 && $10 != "-" {print $1; exit}') && curl -L https://nodejs.org/download/release/$VERSION/node-$VERSION-linux-x64.tar.gz | tar --strip-components=1 -xzf - -C $HOME/.local/nodejs && echo "$HOME/.local/nodejs/bin" >> $GITHUB_PATH
+      - run: mkdir -p $HOME/.local/terraform && curl -L https://github.com/alshdavid/xpkg/releases/download/terraform-latest/terraform-linux-amd64.tar.gz | tar -xzf - -C $HOME/.local/terraform && echo "$HOME/.local/terraform" >> $GITHUB_PATH
+
+      - run: npm install
+      - run: npm run build
+
+      - run: cd .terraform && terraform init && terraform validate && terraform apply --auto-approve
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ap-southeast-2
+          CLOUDFLARE_API_KEY: ${{ secrets.CLOUDFLARE_API_KEY }}
+          CLOUDFLARE_EMAIL: ${{ secrets.CLOUDFLARE_EMAIL }}
